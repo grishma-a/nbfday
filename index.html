@@ -7,6 +7,21 @@
     <title>for chibby</title>
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&display=swap" rel="stylesheet">
     <style>
+
+        /* falling hearts */
+.hearts{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.heart{
+  position:absolute;top:-30px;line-height:1;font-family:sans-serif;
+  color:#e0344b;will-change:transform;
+  animation:fall linear forwards;
+}
+@keyframes fall{
+  0%  {transform:translate(0,-5vh) rotate(var(--r0));opacity:0}
+  10% {opacity:var(--o)}
+  90% {opacity:var(--o)}
+  100%{transform:translate(var(--drift),110vh) rotate(var(--r1));opacity:0}
+}
+
         /* Your handwriting font: drop handwriting.ttf / .woff2 / .otf next to this file.
    If it's missing, the page falls back to Caveat (a handwriting-style Google font). */
         @font-face {
@@ -46,6 +61,7 @@
             width: var(--envW);
             height: var(--envH);
             cursor: pointer;
+             z-index: 1;   
             -webkit-tap-highlight-color: transparent
         }
 
@@ -315,6 +331,7 @@
 </head>
 
 <body>
+    <div class="hearts" id="hearts"></div>
 
     <div class="scene" id="scene">
         <div class="env-back">
@@ -360,6 +377,25 @@ GM ♥`
         /* ============================ */
 
         const $ = id => document.getElementById(id);
+        // falling hearts
+function drop(prefill = false) {
+  const h = document.createElement('span');
+  const dur = 6 + Math.random() * 6;                       // fall time in seconds
+  h.className = 'heart';
+  h.textContent = '♥';
+  h.style.left = Math.random() * 100 + 'vw';
+  h.style.fontSize = (10 + Math.random() * 16) + 'px';     // size
+  h.style.animationDuration = dur + 's';
+  if (prefill) h.style.animationDelay = -Math.random() * dur + 's'; // start mid-fall
+  h.style.setProperty('--o', (0.25 + Math.random() * 0.45).toFixed(2)); // see-through-ness
+  h.style.setProperty('--drift', (Math.random() * 80 - 40) + 'px');     // sideways sway
+  h.style.setProperty('--r0', (Math.random() * 40 - 20) + 'deg');
+  h.style.setProperty('--r1', (Math.random() * 80 - 40) + 'deg');
+  $('hearts').appendChild(h);
+  h.addEventListener('animationend', () => h.remove());
+}
+for (let i = 0; i < 18; i++) drop(true);   // fills the screen on load
+setInterval(drop, 350);                    // then a new heart every 0.35s
         $('photo').src = CONFIG.photo;
 
         // Build text: words wrap normally, every letter is its own hidden span
