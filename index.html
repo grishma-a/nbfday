@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>for chibby</title>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        /* Your handwriting font: drop handwriting.ttf / .woff2 / .otf next to this file.
+   If it's missing, the page falls back to Caveat (a handwriting-style Google font). */
+        @font-face {
+            font-family: 'MyHandwriting';
+            src: url('handwriting.woff2') format('woff2'), url('handwriting.ttf') format('truetype'), url('handwriting.otf') format('opentype');
+        }
+
+        :root {
+            --hand: 'MyHandwriting', 'Caveat', 'Segoe Script', cursive;
+            --cw: min(47vw, 440px, 58vh);
+            /* width of one card half */
+            --H: calc(var(--cw)*1.3);
+            /* card height */
+            --envW: calc(var(--cw)*1.25);
+            --envH: calc(var(--H)*.6);
+            --paper: #fffaf3;
+            --ink: #2b2f4a;
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+            background: radial-gradient(circle at 50% 30%, #ffe3df, #f3b9bf 70%, #e7a0ab);
+            font-family: var(--hand)
+        }
+
+        .scene {
+            position: relative;
+            width: var(--envW);
+            height: var(--envH);
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent
+        }
+
+        /* envelope */
+        .env-back,
+        .env-front {
+            position: absolute;
+            inset: 0;
+            border-radius: 6px;
+            transition: transform 1.1s cubic-bezier(.5, 0, .9, .5)
+        }
+
+        .env-back {
+            background: #c98b7a;
+            z-index: 1
+        }
+
+        .env-flap {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 100%;
+            height: calc(var(--envH)*.55);
+            background: #b97a69;
+            clip-path: polygon(0 100%, 50% 0, 100% 100%)
+        }
+
+        .env-front {
+            z-index: 3;
+            background: linear-gradient(#ecaa9b, #d98f7d);
+            clip-path: polygon(0 0, 50% 58%, 100% 0, 100% 100%, 0 100%)
+        }
+
+        .env-front::after {
+            content: "♥";
+            position: absolute;
+            left: 50%;
+            top: 66%;
+            transform: translate(-50%, -50%);
+            font-size: calc(var(--cw)*.14);
+            color: #a3333d;
+            font-family: sans-serif
+        }
+
+        .go .env-back,
+        .go .env-front {
+            transform: translateY(150vh)
+        }
+
+        .hint {
+            position: absolute;
+            top: calc(100% + 22px);
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: clamp(22px, 3vw, 30px);
+            font-weight: 700;
+            color: #7a2d3a;
+            animation: pulse 1.8s ease-in-out infinite;
+            transition: opacity .4s
+        }
+
+        .go .hint {
+            opacity: 0;
+            animation: none
+        }
+
+        @keyframes pulse {
+            50% {
+                transform: scale(1.08)
+            }
+        }
+
+        /* card */
+        .card {
+            --tx: 0px;
+            --ty: 0px;
+            position: absolute;
+            z-index: 2;
+            bottom: 8px;
+            left: 50%;
+            margin-left: calc(var(--cw)*-1.5);
+            width: calc(var(--cw)*2);
+            height: var(--H);
+            perspective: 2400px;
+            transform: translate(var(--tx), var(--ty));
+            transition: transform 1.3s cubic-bezier(.4, 0, .2, 1);
+            pointer-events: none
+        }
+
+        .card.rise {
+            --ty: calc((var(--H) - var(--envH))/2 + 8px)
+        }
+
+        .card.open {
+            --tx: calc(var(--cw)*.5)
+        }
+
+        .page-r,
+        .cover {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            width: 50%;
+            height: 100%
+        }
+
+        .page-r {
+            background: var(--paper);
+            border-radius: 0 8px 8px 0;
+            box-shadow: 0 18px 40px rgba(90, 20, 40, .3);
+            container-type: inline-size;
+            padding: 7% 8%
+        }
+
+        .page-r::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 7%;
+            background: linear-gradient(90deg, rgba(0, 0, 0, .1), transparent)
+        }
+
+        .text {
+            height: 100%;
+            overflow: hidden;
+            color: var(--ink);
+            line-height: 1.3;
+            font-size: 5.4cqw
+        }
+
+        .ch {
+            display: inline-block;
+            clip-path: inset(-30% 100% -30% -10%)
+        }
+
+        .ch.on {
+            clip-path: inset(-30% -10% -30% -10%);
+            transition: clip-path .14s linear
+        }
+
+        .w {
+            display: inline-block;
+            white-space: nowrap
+        }
+
+        .cover {
+            z-index: 2;
+            transform-origin: left center;
+            transform-style: preserve-3d;
+            transition: transform 1.6s cubic-bezier(.5, 0, .2, 1)
+        }
+
+        .open .cover {
+            transform: rotateY(-180deg)
+        }
+
+        .face {
+            position: absolute;
+            inset: 0;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden
+        }
+
+        .front {
+            background: linear-gradient(135deg, #fbe4e1, #f6cfd0);
+            border-radius: 0 8px 8px 0;
+            display: grid;
+            place-items: center;
+            text-align: center;
+            color: #a3333d;
+            box-shadow: 0 18px 40px rgba(90, 20, 40, .3)
+        }
+
+        .front::before {
+            content: "";
+            position: absolute;
+            inset: 4.5%;
+            border: 2px dashed rgba(163, 51, 61, .5);
+            border-radius: 6px
+        }
+
+        .front b {
+            display: block;
+            font-size: calc(var(--cw)*.13);
+            line-height: 1.1;
+            font-weight: 700
+        }
+
+        .front i {
+            display: block;
+            font-style: normal;
+            font-size: calc(var(--cw)*.2);
+            margin-top: .2em;
+            font-family: sans-serif
+        }
+
+        .back {
+            transform: rotateY(180deg);
+            background: var(--paper);
+            border-radius: 8px 0 0 8px;
+            display: grid;
+            place-items: center;
+            box-shadow: 0 18px 40px rgba(90, 20, 40, .3)
+        }
+
+        .back::after {
+            content: "";
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 7%;
+            background: linear-gradient(270deg, rgba(0, 0, 0, .1), transparent)
+        }
+
+        .photo {
+            width: 78%;
+            aspect-ratio: 4/5;
+            background: #fff;
+            padding: 4% 4% 12%;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, .25);
+            transform: rotate(-2deg);
+            position: relative
+        }
+
+        .photo .ph {
+            width: 100%;
+            height: 100%;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(135deg, #f7c9cf, #e9a3b0);
+            color: #fff;
+            font-size: calc(var(--cw)*.07);
+            text-align: center;
+            overflow: hidden;
+            position: relative
+        }
+
+        .photo img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover
+        }
+
+        .rotate {
+            display: none;
+            position: fixed;
+            bottom: 10px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: #7a2d3a;
+            font-size: 20px
+        }
+
+        @media (orientation:portrait) and (max-width:700px) {
+            .rotate {
+                display: block
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="scene" id="scene">
+        <div class="env-back">
+            <div class="env-flap"></div>
+        </div>
+
+        <div class="card" id="card">
+            <div class="page-r">
+                <div class="text" id="text"></div>
+            </div>
+            <div class="cover">
+                <div class="face front">
+                    <div><b>Happy National <br>Boyfriend Day</b><i></i></div>
+                </div>
+                <div class="face back">
+                    <div class="photo">
+                        <div class="ph">your photo<br>goes here<img id="photo" alt="Us" onerror="this.remove()"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="env-front"></div>
+        <div class="hint">tap to open 💌</div>
+    </div>
+    <div class="rotate">tip: turn your phone sideways 💕</div>
+
+    <script>
+        /* ====== EDIT THIS PART ====== */
+        const CONFIG = {
+            photo: "us.jpg",        // put your picture in the same folder with this name
+            speed: 70,              // ms per letter (lower = faster writing)
+            message:
+                `my dear sweet baby,
+
+hello chibby! happy national boyfriend day! you're my most favorite person in the world, and im so glad that weve been able to see each other every month. no matter how often we see each other, i will always wish that i can see you more. i love being able to both be a tourist with you, while also getting the chance to be domestic with you while we live the little life we always dreamed of living. thank you for showing me the bay area and for letting me have a getaway experience every single month. i dont take any of it for granted. i cant wait to experience even more adventures with you. i cant wait until my fridge is covered in magents and pictures that remind me of you, and my journals are dedicated solely to all the travels we've spent together. i love making memories with you and im excited for the future memories well get to make together. youre my everything, and i cant wait to be your wife one day. 
+
+thank you for being my best friend, my lover, and my partner in crime. i love you so much, and i hope you have the best national boyfriend day ever!
+
+always yours,
+grishi maraj  | GM ♥`
+        };
+        /* ============================ */
+
+        const $ = id => document.getElementById(id);
+        $('photo').src = CONFIG.photo;
+
+        // Build text: words wrap normally, every letter is its own hidden span
+        const textEl = $('text'), chars = [];
+        CONFIG.message.split('\n').forEach((line, li, all) => {
+            line.split(' ').forEach((word, wi, ws) => {
+                const w = document.createElement('span'); w.className = 'w';
+                [...word].forEach(c => { const s = document.createElement('span'); s.className = 'ch'; s.textContent = c; w.appendChild(s); chars.push(s); });
+                textEl.appendChild(w);
+                if (wi < ws.length - 1) textEl.appendChild(document.createTextNode(' '));
+            });
+            if (li < all.length - 1) { textEl.appendChild(document.createElement('br')); if (!line) chars.push(null); }
+        });
+
+        // Shrink text if it's too long for the page
+        function fit() {
+            let fs = textEl.clientWidth * 0.1;
+            textEl.style.fontSize = fs + 'px';
+            while (textEl.scrollHeight > textEl.clientHeight && fs > 9) { fs -= 0.5; textEl.style.fontSize = fs + 'px'; }
+        }
+
+        function write(i = 0) {
+            if (i >= chars.length) return;
+            const el = chars[i]; let d = CONFIG.speed * (0.7 + Math.random() * 0.6);
+            if (el) { el.classList.add('on'); if (/[,;]/.test(el.textContent)) d += 160; if (/[.!?]/.test(el.textContent)) d += 380; }
+            else d += 350; // pause at blank lines
+            setTimeout(() => write(i + 1), d);
+        }
+
+        $('scene').addEventListener('click', async () => {
+            $('scene').classList.add('go');
+            $('card').classList.add('rise');
+            await document.fonts.ready;
+            setTimeout(() => $('card').classList.add('open'), 1000);
+            setTimeout(() => { fit(); write(); }, 2900);
+        }, { once: true });
+    </script>
+</body>
+
+</html>
